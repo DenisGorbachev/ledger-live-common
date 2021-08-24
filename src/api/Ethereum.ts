@@ -37,6 +37,14 @@ export type Tx = {
     }>;
     truncated: boolean;
   };
+  erc721TransferEvents?: {
+    list: Array<{
+      contract: string;
+      from: string;
+      to: string;
+      token_id: BigNumber;
+    }>;
+  };
   actions?: Array<{
     from: string;
     to: string;
