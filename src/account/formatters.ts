@@ -79,6 +79,7 @@ const cliFormat = (account, level?: string) => {
     index,
     xpub,
     operations,
+    NFT,
   } = account;
   const balance = formatCurrencyUnit(account.unit, account.balance, {
     showCode: true,
@@ -120,6 +121,37 @@ const cliFormat = (account, level?: string) => {
         maybeDisplaySumOfOpsIssue(ta.operations, ta.balance, getAccountUnit(ta))
     )
     .join("\n");
+
+  if (NFT?.length) {
+    const NFTCollections = NFT.reduce((acc, n) => {
+      if (!acc[n.collection.contract]) {
+        acc[n.collection.contract] = [];
+      }
+      acc[n.collection.contract].push(n);
+
+      return acc;
+    }, {});
+    const collectionContractsAddr = Object.keys(NFTCollections);
+
+    str += `\nNFT Collections (${collectionContractsAddr.length}) \n`;
+    str += collectionContractsAddr
+      .map((cAddr) => {
+        const tokens = NFTCollections[cAddr];
+        const collectionName = tokens?.[0]?.collection?.name;
+
+        return (
+          " " +
+          (collectionName ?? "Unknown Collection Name") +
+          " (" +
+          cAddr +
+          ")" +
+          ": " +
+          tokens.map((t) => t.tokenId).join(", ")
+        );
+      })
+      .join("\n");
+  }
+
   if (level === "basic") return str;
   str += "\nOPERATIONS (" + operations.length + ")";
   str += operations
@@ -145,7 +177,7 @@ const cliFormat = (account, level?: string) => {
 };
 
 const stats = (account) => {
-  const { subAccounts, operations } = account;
+  const { subAccounts, operations, NFT } = account;
   const sumOfAllOpsNumber = operations.reduce(
     (sum: BigNumber, op) => sum.plus(getOperationAmountNumberWithInternals(op)),
     new BigNumber(0)
@@ -161,6 +193,7 @@ const stats = (account) => {
     sumOfAllOps,
     opsCount: operations.length,
     subAccountsCount: (subAccounts || []).length,
+    NFT: (NFT || []).length,
   };
 };
 
