@@ -2,7 +2,9 @@ import { BigNumber } from "bignumber.js";
 import type { AccountLike, Account } from "../../types";
 import type { Transaction } from "./types";
 import { getMainAccount } from "../../account";
+import wallet from "./wallet";
 import { getWalletAccount } from "./wallet";
+import { getAccountNetworkInfo } from "./getAccountNetworkInfo";
 
 /**
  * Returns the maximum possible amount for transaction
@@ -18,13 +20,18 @@ const estimateMaxSpendable = async ({
   parentAccount: Account | null | undefined;
   transaction: Transaction | null | undefined;
 }): Promise<BigNumber> => {
-  // TODO Need implementation in wallet-btc (LL-6959)
-  /*
   const mainAccount = getMainAccount(account, parentAccount);
   const walletAccount = await getWalletAccount(mainAccount);
-  const estimate = walletAccount.estimateAccountMaxSpendable(walletAccount);
-  //*/
-  return new BigNumber(account.balance);
+  let feePerByte = transaction?.feePerByte;
+  if (!feePerByte) {
+    const networkInfo = await getAccountNetworkInfo(mainAccount);
+    feePerByte = networkInfo.feeItems.defaultFeePerByte;
+  }
+  const maxSpendable = await wallet.estimateAccountMaxSpendable(
+    walletAccount,
+    feePerByte.toNumber()
+  );
+  return maxSpendable.lt(0) ? new BigNumber(0) : maxSpendable;
 };
 
 export default estimateMaxSpendable;
